@@ -29,8 +29,8 @@
   when: >
     provider != "bare-metal" and
     provider != "virtualbox" and
-    provider != "packer" and 
-    provider != "vsphere" 
+    provider != "packer" and
+    provider != "vsphere"
   tags:
     - common
 
@@ -70,6 +70,7 @@
     state: latest
   tags:
     - bootstrap
+  when: install_epel_repo
 
 - name: install system utilities
   sudo: yes
