@@ -16,6 +16,17 @@
     # this variable.
     # consul_acl_datacenter: your_primary_datacenter
 
+    # CUSTOM REPOSITORY VARIABLES
+    # docker_prefix: "CUSTOM_DOCKER_REGISTRY/"
+    # docker_package_source: redhat
+    # install_epel_repo: false
+    # repositories:
+    #   -
+    #     name: CUSTOM_REPO
+    #     baseurl: http://CUSTOM_REPO_URL
+    #     enabled: 1
+    #     gpgcheck: 0
+
     consul_servers_group: role=control
   roles:
     - common
