@@ -5,9 +5,7 @@
     src: '{{ item }}.json.j2'
     dest: /etc/marathon/apps/{{ item }}.json
     mode: 0600
-  with_items:
-    - mesos-consul
-    - mantl-api
+  with_items: marathon_jobs
   tags:
     - marathon
 
@@ -18,9 +16,7 @@
   changed_when: false
   failed_when: "'deploymentId' not in result.stdout"
   register: result
-  with_items:
-    - mesos-consul
-    - mantl-api
+  with_items: marathon_jobs
   tags:
     - marathon
     - skip_ansible_lint
