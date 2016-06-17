@@ -1,4 +1,15 @@
 ---
+- name: create mesos framework users
+  sudo: yes
+  user:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "{{ mesos_framework_users }}"
+  tags:
+    - mesos
+    - bootstrap
+    
 - name: install follower configuration
   sudo: yes
   yum:

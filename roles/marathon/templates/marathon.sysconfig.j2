@@ -5,6 +5,7 @@ MARATHON_HTTP_PORT=18080
 MARATHON_LOGGING_LEVEL={{ marathon_log_level }}
 MARATHON_MASTER={{ marathon_mesos }}
 MARATHON_ZK={{ marathon_zk_connect }}
+MARATHON_MESOS_USER=marathon
 
 # ssl keystore
 {% if marathon_keystore_password == "" %}# {% endif %}MARATHON_SSL_KEYSTORE_PASSWORD={{ marathon_keystore_password }}

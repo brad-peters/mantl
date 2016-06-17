@@ -1,4 +1,13 @@
 ---
+- name: create marathon user
+  sudo: yes
+  user:
+    name: "{{ marathon_user }}"
+    state: present
+  tags:
+    - marathon
+    - bootstrap
+    
 - name: install marathon package
   sudo: yes
   yum:
@@ -25,6 +34,27 @@
     replace: '=mesos-master.service'
   notify:
     - reload marathon
+    - restart marathon
+  tags:
+    - marathon
+
+- name: create marathon service over ride directory
+  sudo: yes
+  file:
+    path: /etc/systemd/system/marathon.service.d
+    state: directory
+  tags:
+    - marathon
+
+- name: create marathon service over ride
+  sudo: yes
+  copy:
+    dest: /etc/systemd/system/marathon.service.d/user.conf
+    content: |
+      [Service]
+      User={{ marathon_user }}
+  notify:
+    - reload systemd daemon
     - restart marathon
   tags:
     - marathon

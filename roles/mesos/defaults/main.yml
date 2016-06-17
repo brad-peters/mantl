@@ -5,6 +5,9 @@ mesos_package: "mesos-{{ mesos_version }}"
 mesos_master_package: "mesos-master-{{ mesos_version }}"
 mesos_agent_package: "mesos-agent-{{ mesos_version }}"
 
+mesos_framework_users: 
+  - marathon
+
 mesos_mode: follower
 mesos_log_dir: /var/log/mesos
 mesos_logging_level: WARNING
