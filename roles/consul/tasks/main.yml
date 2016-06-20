@@ -85,3 +85,15 @@
     - consul
 
 - include: nginx_proxy.yml
+
+- name: remove distributive checks for docker container container name doesn't match
+  sudo: yes
+  replace:
+    dest: /etc/distributive.d/distributive-consul.json
+    regexp: ",?\\s*{\\s*\"Name\": \"nginx-consul docker container\"[^}]*}"
+    replace: ''
+    backup: yes
+  notify:
+    - reload consul
+  tags:
+    - consul
