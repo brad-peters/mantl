@@ -31,29 +31,15 @@ marathon_principal: marathon
 marathon_secret: ""
 
 # jobs
-mesos_consul_image: ciscocloud/mesos-consul
+mesos_consul_image: "{{ docker_prefix }}ciscocloud/mesos-consul"
 mesos_consul_image_tag: v0.3.2
 mesos_consul_refresh: "7s"
-marathon_consul_image: ciscocloud/marathon-consul
+marathon_consul_image: "{{ docker_prefix }}ciscocloud/marathon-consul"
 marathon_consul_image_tag: 0.2
-mantl_api_image: ciscocloud/mantl-api
+mantl_api_image: "{{ docker_prefix }}ciscocloud/mantl-api"
 mantl_api_image_tag: 0.2.1
 
 # jobs
 marathon_jobs:
   - mesos-consul
   - mantl-api
-
-marathon_job_desc:
-  -
-    name: mesos-consul
-    image: "{{ docker_prefix }}{{ mesos_consul_image }}"
-    tag: "{{ mesos_consul_image_tag }}"
-  -
-    name: marathon-consul
-    image: "{{ docker_prefix }}{{ marathon_consul_image }}"
-    tag: "{{ marathon_consul_image_tag }}"
-  -
-    name: mantl-api
-    image: "{{ docker_prefix }}{{ mantl_api_image }}"
-    tag: "{{ mantl_api_image_tag }}"
