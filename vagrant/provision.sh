@@ -17,6 +17,8 @@ if ! sshpass; then
   yum install -y --enablerepo=epel sshpass
 fi
 
+yum install -y openssl-devel libffi-devel
+
 # Install required packages if they aren't already present
 for pkg in gcc python-virtualenv libselinux-python; do
   yum list installed "$pkg" > /dev/null || yum install -y "$pkg"

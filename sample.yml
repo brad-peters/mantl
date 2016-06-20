@@ -16,7 +16,19 @@
     # this variable.
     # consul_acl_datacenter: your_primary_datacenter
 
+    # CUSTOM REPOSITORY VARIABLES
+    docker_prefix: "q1docker-dev.canlab.ibm.com/"
+    install_epel_repo: false
+    docker_package_source: redhat
+    repositories:
+      -
+        name: mantl-rpms
+        baseurl: CUSTOM_REPO_URL
+        enabled: 1
+        gpgcheck: 0
+
     consul_servers_group: role=control
+
   roles:
     - common
     - lvm
@@ -25,7 +37,7 @@
     - consul-template
     - nginx
     - consul
-    - etcd
+    # - etcd
     - dnsmasq
 
 # ROLES - after provisioning the software that's common to all hosts, we do
@@ -45,6 +57,18 @@
   vars:
     mesos_mode: follower
     zookeeper_server_group: role=control
+
+    # CUSTOM REPOSITORY VARIABLES
+    docker_prefix: "q1docker-dev.canlab.ibm.com/"
+    install_epel_repo: false
+    docker_package_source: redhat
+    repositories:
+      -
+        name: mantl-rpms
+        baseurl: CUSTOM_REPO_URL
+        enabled: 1
+        gpgcheck: 0
+
   roles:
     - mesos
 
@@ -60,39 +84,74 @@
     mesos_leaders_group: role=control
     mesos_mode: leader
     zookeeper_server_group: role=control
+
+    # CUSTOM REPOSITORY VARIABLES
+    docker_prefix: "q1docker-dev.canlab.ibm.com/"
+    install_epel_repo: false
+    docker_package_source: redhat
+    repositories:
+      -
+        name: mantl-rpms
+        baseurl: CUSTOM_REPO_URL
+        enabled: 1
+        gpgcheck: 0
+
   roles:
     - vault
     - zookeeper
     - mesos
     - marathon
-    - mantlui
-    - kubernetes
-    - kubernetes-master
-    - kubernetes-addons
+    # - mantlui
+    # - kubernetes
+    # - kubernetes-master
+    # - kubernetes-addons
 
-- hosts: role=kubeworker
-  # role=worker hosts are a subset of "all". Since we already gathered facts on
-  # all servers, we can skip it here to speed up the deployment.
-  gather_facts: yes
-  vars:
-    consul_dns_domain: consul
-  roles:
-    - flannel
-    - kubernetes
-    - kubernetes-node
+# - hosts: role=kubeworker
+#   # role=worker hosts are a subset of "all". Since we already gathered facts on
+#   # all servers, we can skip it here to speed up the deployment.
+#   gather_facts: yes
+#   vars:
+#     consul_dns_domain: consul
+#
+#     # CUSTOM REPOSITORY VARIABLES
+#     docker_prefix: "q1docker-dev.canlab.ibm.com/"
+#     install_epel_repo: false
+#     docker_package_source: redhat
+#     repositories:
+#       -
+#         name: mantl-rpms
+#         baseurl: CUSTOM_REPO_URL
+#         enabled: 1
+#         gpgcheck: 0
+#
+#   roles:
+#     - flannel
+#     - kubernetes
+#     - kubernetes-node
 
-# The edge role exists solely for routing traffic into the cluster. Firewall
-# settings should be such that web traffic (ports 80 and 443) is exposed to the
-# world.
-- hosts: role=edge
-  gather_facts: yes
-  vars:
-    # this is the domain that traefik will match on to do host-based HTTP
-    # routing. Set it to a domain you control and add a star domain to route
-    # traffic. (EG *.marathon.localhost)
-    #
-    # For those migrating from haproxy, this variable serves the same purpose
-    # and format as `haproxy_domain`.
-    traefik_marathon_domain: marathon.localhost
-  roles:
-    - traefik
+# # The edge role exists solely for routing traffic into the cluster. Firewall
+# # settings should be such that web traffic (ports 80 and 443) is exposed to the
+# # world.
+# - hosts: role=edge
+#   gather_facts: yes
+#   vars:
+#     # this is the domain that traefik will match on to do host-based HTTP
+#     # routing. Set it to a domain you control and add a star domain to route
+#     # traffic. (EG *.marathon.localhost)
+#     #
+#     # For those migrating from haproxy, this variable serves the same purpose
+#     # and format as `haproxy_domain`.
+#     traefik_marathon_domain: marathon.localhost
+#
+#     # CUSTOM REPOSITORY VARIABLES
+#     docker_prefix: "q1docker-dev.canlab.ibm.com/"
+#     install_epel_repo: false
+#     docker_package_source: redhat
+#     repositories:
+#       -
+#         name: mantl-rpms
+#         baseurl: CUSTOM_REPO_URL
+#         enabled: 1
+#         gpgcheck: 0
+#   roles:
+#     - traefik
