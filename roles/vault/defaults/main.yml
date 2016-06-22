@@ -7,3 +7,8 @@ vault_init_json: '{
 	"secret_shares": 5,
 	"secret_threshold": 3
 }' # ansible lint doesn't like the line split between curly braces
+
+# 5184000 seconds = 60 days
+vault_token_max_ttl: 5184000
+# 2592000 seconds = 30 days
+vault_token_default_ttl: 2592000

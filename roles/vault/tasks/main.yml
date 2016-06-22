@@ -32,3 +32,9 @@
     - vault
 
 - include: bootstrap.yml
+
+- name: set token ttl
+  shell: VAULT_TOKEN={{vault_root_token}} vault mount-tune -default-lease-ttl={{ vault_token_default_ttl }}s -max-lease-ttl={{ vault_token_max_ttl }}s auth/token
+  no_log: true
+  tags:
+    - vault
