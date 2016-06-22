@@ -25,7 +25,7 @@
   changed_when: no
   when: "'Vault is already initialized' not in vault_init_output.stdout"
   set_fact:
-    vault_token: "{{ (vault_init_output.stdout|from_json)['root_token'] }}"
+    vault_root_token: "{{ (vault_init_output.stdout|from_json)['root_token'] }}"
   tags:
     - vault
 
@@ -47,7 +47,7 @@
   when: "'Vault is already initialized' not in vault_init_output.stdout"
   lineinfile:
     dest: "{{ playbook_dir }}/security.yml"
-    line: 'vault_root_token: {{ vault_token }}'
+    line: 'vault_root_token: {{ vault_root_token }}'
     regexp: '^vault_root_token:.*'
     insertbefore: "^zk_marathon_user:"
   tags:
