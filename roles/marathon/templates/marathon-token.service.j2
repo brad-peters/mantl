@@ -1,0 +1,14 @@
+[Unit]
+Description=marathon-token
+After=vault.service
+Wants=vault.service
+
+[Service]
+Type=oneshot
+User={{ marathon_user }}
+Environment=VAULT_TOKEN={{ marathon_vault_token }}
+ExecStart=/bin/bash -c '/usr/bin/vault token-renew $VAULT_TOKEN > /dev/null'
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target

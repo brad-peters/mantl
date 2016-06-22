@@ -7,7 +7,7 @@
   tags:
     - marathon
     - bootstrap
-    
+
 - name: install marathon package
   sudo: yes
   yum:
@@ -23,6 +23,86 @@
   command: consul-cli acl-update --token={{ consul_acl_master_token }} --name="Marathon ACL Token" --rule='key:marathon:write' {{ consul_acl_marathon_token }}
   tags:
     - marathon
+
+
+## VAULT TOKEN START
+
+- name: write marathon-ro policy for vault_keys
+  copy:
+    dest: /tmp/marathon-policy.json
+    src: marathon-policy.json
+  tags:
+    - marathon
+
+- name: write marathon policy to vault_keys
+  shell: VAULT_TOKEN={{vault_root_token}} vault policy-write marathon /tmp/marathon-policy.json
+  no_log: true
+  tags:
+    - marathon
+
+- name: create marathon vault token
+  shell: VAULT_TOKEN={{vault_root_token}} vault token-create --policy=marathon --format=json
+  no_log: true
+  register: marathon_token_result
+  tags:
+    - marathon
+
+- name: set marathon vault token
+  set_fact:
+    marathon_vault_token={{ (marathon_token_result.stdout | from_json).auth.client_token }}
+
+- name: write vault secrets
+  shell: VAULT_TOKEN={{vault_root_token}} vault write secret/marathon/{{item.key}} value="{{ item.value }}"
+  no_log: true
+  with_items:
+    - key: marathon_zk_connect
+      value: "{{ marathon_zk_connect }}"
+    - key: marathon_mesos
+      value: "{{ marathon_mesos }}"
+  notify:
+    - restart marathon
+  tags:
+    - marathon
+
+- name: add vault token service
+  sudo: yes
+  template:
+    src: marathon-token.service.j2
+    dest: /etc/systemd/system/marathon-token.service
+  notify:
+    - reload systemd
+  tags:
+    - marathon
+
+- name: add vault token service timer
+  sudo: yes
+  template:
+    src: marathon-token.timer.j2
+    dest: /etc/systemd/system/marathon-token.timer
+  notify:
+    - reload systemd
+  tags:
+    - marathon
+
+- name: enable vault token service
+  sudo: yes
+  service:
+    name: marathon-token
+    enabled: yes
+  tags:
+    - marathon
+
+- name: enable vault token timer
+  sudo: yes
+  service:
+    name: marathon-token.timer
+    enabled: yes
+    state: started
+  tags:
+    - marathon
+
+## VAULT TOKEN END
+
 
 - include: conf.yml
 
@@ -53,6 +133,28 @@
     content: |
       [Service]
       User={{ marathon_user }}
+  notify:
+    - reload systemd daemon
+    - restart marathon
+  tags:
+    - marathon
+
+- name: create service wrapper script
+  sudo: yes
+  copy:
+    src: vault-wrapper-marathon.sh
+    dest: /usr/local/bin/vault-wrapper-marathon.sh
+    mode: 0755
+  notify:
+    - restart marathon
+  tags:
+    - marathon
+
+- name: create marathon vault over ride
+  sudo: yes
+  template:
+    dest: /etc/systemd/system/marathon.service.d/vault.conf
+    src: vault.conf.j2
   notify:
     - reload systemd daemon
     - restart marathon
