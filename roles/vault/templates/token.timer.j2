@@ -1,0 +1,10 @@
+[Unit]
+Description=Renew {{service_name}} vault token every {{ vault_token_default_ttl  // 2 }} seconds
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec={{ vault_token_default_ttl  // 2 }}s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

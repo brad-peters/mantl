@@ -1,0 +1,30 @@
+---
+
+- name: add vault token service
+  sudo: yes
+  template:
+    src: token.service.j2
+    dest: /etc/systemd/system/{{service_name}}-token.service
+  notify:
+    - reload systemd
+
+- name: add vault token service timer
+  sudo: yes
+  template:
+    src: token.timer.j2
+    dest: /etc/systemd/system/{{service_name}}-token.timer
+  notify:
+    - reload systemd
+
+- name: enable vault token service
+  sudo: yes
+  service:
+    name: "{{service_name}}-token"
+    enabled: yes
+
+- name: enable vault token timer
+  sudo: yes
+  service:
+    name: "{{service_name}}-token.timer"
+    enabled: yes
+    state: started

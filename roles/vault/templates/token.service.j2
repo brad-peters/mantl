@@ -1,0 +1,15 @@
+[Unit]
+Description={{service_name}}-token
+After=vault-{{vault_backend}}.service
+Wants=vault-{{vault_backend}}.service
+
+[Service]
+Type=oneshot
+User={{ service_user }}
+Environment=VAULT_TOKEN={{ service_vault_token }}
+Environment=VAULT_ADDRESS=https://localhost:{{vault_default_port}}
+ExecStart=/bin/bash -c '/usr/bin/vault token-renew $VAULT_TOKEN > /dev/null'
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target
