@@ -1,0 +1,23 @@
+---
+- name: prep docker creds folder
+  file:
+    path: /tmp/docker
+    state: directory
+
+- name: mount tmpfs on docker creds folder
+  sudo: yes
+  shell: mount -t tmpfs -o size=100M,mode=0640 tmpfs /tmp/docker
+
+- name: write docker creds to tmpfs
+  sudo: yes
+  template:
+    src: config.json.j2
+    dest: /tmp/docker/config.json
+
+- name: pull image
+  sudo: yes
+  shell: /usr/bin/docker --config=/tmp/docker/ pull {{ pull_image }}:{{ pull_image_tag }}
+
+- name: unmount tmpfs on docker creds folder
+  sudo: yes
+  shell: umount /tmp/docker
