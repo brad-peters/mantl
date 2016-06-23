@@ -64,42 +64,7 @@
   tags:
     - marathon
 
-- name: add vault token service
-  sudo: yes
-  template:
-    src: marathon-token.service.j2
-    dest: /etc/systemd/system/marathon-token.service
-  notify:
-    - reload systemd
-  tags:
-    - marathon
-
-- name: add vault token service timer
-  sudo: yes
-  template:
-    src: marathon-token.timer.j2
-    dest: /etc/systemd/system/marathon-token.timer
-  notify:
-    - reload systemd
-  tags:
-    - marathon
-
-- name: enable vault token service
-  sudo: yes
-  service:
-    name: marathon-token
-    enabled: yes
-  tags:
-    - marathon
-
-- name: enable vault token timer
-  sudo: yes
-  service:
-    name: marathon-token.timer
-    enabled: yes
-    state: started
-  tags:
-    - marathon
+- include: ../../vault/tasks/create-token-service.yml service_name=marathon service_user={{ marathon_user }} service_vault_token={{ marathon_vault_token }}
 
 ## VAULT TOKEN END
 

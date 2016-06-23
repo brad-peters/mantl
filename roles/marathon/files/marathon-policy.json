@@ -12,3 +12,8 @@ path "auth/token/renew/*" {
 path "secret/marathon/*" {
   policy = "read"
 }
+
+# Allow read of registry secrets
+path "secret/repositories/docker/*" {
+  policy = "read"
+}
