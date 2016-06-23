@@ -17,28 +17,53 @@
     # consul_acl_datacenter: your_primary_datacenter
 
     # CUSTOM REPOSITORY VARIABLES
-    docker_prefix: "q1docker-dev.canlab.ibm.com/"
-    install_epel_repo: false
-    docker_package_source: redhat
-    repositories:
-      -
-        name: mantl-rpms
-        baseurl: CUSTOM_REPO_URL
-        enabled: 1
-        gpgcheck: 0
 
     consul_servers_group: role=control
+
+    vault_backend: file
 
   roles:
     - common
     - lvm
     - docker
     - logrotate
-    - consul-template
     - nginx
     - consul
     # - etcd
     - dnsmasq
+
+- hosts: role=control
+  gather_facts: yes
+  vars:
+    consul_servers_group: role=control
+    mesos_leaders_group: role=control
+    mesos_mode: leader
+    zookeeper_server_group: role=control
+
+    # CUSTOM REPOSITORY VARIABLES
+
+
+    vault_backend: consul
+
+  roles:
+    - vault
+
+- hosts: all
+  vars:
+    # consul_acl_datacenter should be set to the datacenter you want to control
+    # Consul ACLs. If you only have one datacenter, set it to that or remove
+    # this variable.
+    # consul_acl_datacenter: your_primary_datacenter
+
+    # CUSTOM REPOSITORY VARIABLES
+
+    consul_servers_group: role=control
+
+    vault_backend: file
+
+  roles:
+    - consul-template
+
 
 # ROLES - after provisioning the software that's common to all hosts, we do
 # specialized hosts. This configuration has two major groups: control nodes and
@@ -59,15 +84,6 @@
     zookeeper_server_group: role=control
 
     # CUSTOM REPOSITORY VARIABLES
-    docker_prefix: "q1docker-dev.canlab.ibm.com/"
-    install_epel_repo: false
-    docker_package_source: redhat
-    repositories:
-      -
-        name: mantl-rpms
-        baseurl: CUSTOM_REPO_URL
-        enabled: 1
-        gpgcheck: 0
 
   roles:
     - mesos
@@ -86,18 +102,11 @@
     zookeeper_server_group: role=control
 
     # CUSTOM REPOSITORY VARIABLES
-    docker_prefix: "q1docker-dev.canlab.ibm.com/"
-    install_epel_repo: false
-    docker_package_source: redhat
-    repositories:
-      -
-        name: mantl-rpms
-        baseurl: CUSTOM_REPO_URL
-        enabled: 1
-        gpgcheck: 0
+
+
+    vault_backend: consul
 
   roles:
-    - vault
     - zookeeper
     - mesos
     - marathon
@@ -114,15 +123,7 @@
 #     consul_dns_domain: consul
 #
 #     # CUSTOM REPOSITORY VARIABLES
-#     docker_prefix: "q1docker-dev.canlab.ibm.com/"
-#     install_epel_repo: false
-#     docker_package_source: redhat
-#     repositories:
-#       -
-#         name: mantl-rpms
-#         baseurl: CUSTOM_REPO_URL
-#         enabled: 1
-#         gpgcheck: 0
+
 #
 #   roles:
 #     - flannel
@@ -144,14 +145,6 @@
 #     traefik_marathon_domain: marathon.localhost
 #
 #     # CUSTOM REPOSITORY VARIABLES
-#     docker_prefix: "q1docker-dev.canlab.ibm.com/"
-#     install_epel_repo: false
-#     docker_package_source: redhat
-#     repositories:
-#       -
-#         name: mantl-rpms
-#         baseurl: CUSTOM_REPO_URL
-#         enabled: 1
-#         gpgcheck: 0
+
 #   roles:
 #     - traefik
