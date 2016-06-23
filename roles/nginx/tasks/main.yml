@@ -13,6 +13,8 @@
   tags:
     - nginx
 
+- include: ../../docker/tasks/pull-image.yml pull_image={{ consul_nginx_image }} pull_image_tag={{ consul_nginx_image_tag }}
+
 - name: create nginx template directory
   sudo: yes
   file:
