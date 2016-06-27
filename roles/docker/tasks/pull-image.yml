@@ -3,16 +3,19 @@
   file:
     path: /tmp/docker
     state: directory
+  when: " docker_registries is defined "
 
 - name: mount tmpfs on docker creds folder
   sudo: yes
   shell: mount -t tmpfs -o size=100M,mode=0640 tmpfs /tmp/docker
+  when: " docker_registries is defined "
 
 - name: write docker creds to tmpfs
   sudo: yes
   template:
     src: config.json.j2
     dest: /tmp/docker/config.json
+  when: " docker_registries is defined "
 
 - name: pull image
   sudo: yes
@@ -21,3 +24,4 @@
 - name: unmount tmpfs on docker creds folder
   sudo: yes
   shell: umount /tmp/docker
+  when: " docker_registries is defined "
