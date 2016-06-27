@@ -5,7 +5,10 @@ mesos_package: "mesos-{{ mesos_version }}"
 mesos_master_package: "mesos-master-{{ mesos_version }}"
 mesos_agent_package: "mesos-agent-{{ mesos_version }}"
 
-mesos_framework_users: 
+mesos_agent_user: root
+mesos_master_user: root
+
+mesos_framework_users:
   - marathon
 
 mesos_mode: follower

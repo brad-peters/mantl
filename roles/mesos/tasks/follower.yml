@@ -9,7 +9,7 @@
   tags:
     - mesos
     - bootstrap
-    
+
 - name: install follower configuration
   sudo: yes
   yum:
@@ -28,42 +28,137 @@
   tags:
     - mesos
 
-- name: write credential
-  when: do_mesos_follower_auth|bool
+## VAULT TOKEN START
+- name: Set vault_root_token
+  set_fact:
+    vault_root_token: '{% for host in groups["all"] if hostvars[host].vault_root_token is defined %}{% if loop.last %}{{ hostvars[host].vault_root_token }}{% endif %}{% endfor %}'
+  when: "not vault_root_token is defined"
+
+- include_vars: ../../vault/defaults/main.yml
+  when: " not vault_address is defined"
+
+- name: write mesos-agent-ro policy for vault_keys
+  copy:
+    dest: /tmp/mesos-agent-policy.json
+    src: mesos-agent-policy.json
+  tags:
+    - mesos-agent
+
+- name: write mesos-agent policy to vault_keys
+  shell: VAULT_TOKEN={{vault_root_token}} vault policy-write -address={{vault_address}} mesos-agent /tmp/mesos-agent-policy.json
+  #no_log: true
+  tags:
+    - mesos-agent
+
+- name: create mesos-agent vault token
+  shell: VAULT_TOKEN={{vault_root_token}} vault token-create -address={{vault_address}} --policy=mesos-agent --format=json
+  #no_log: true
+  register: mesos_agent_token_result
+  tags:
+    - mesos-agent
+
+- name: set mesos-agent vault token
+  set_fact:
+    mesos_agent_vault_token={{ (mesos_agent_token_result.stdout | from_json).auth.client_token }}
+
+- name: write vault secrets
+  shell: VAULT_TOKEN={{vault_root_token}} vault write -address={{vault_address}} secret/mesos-agent/{{item.key}} value="{{ item.value }}"
+  #no_log: true
+  with_items:
+    - key: mesos_follower_principal
+      value: "{{ mesos_follower_principal }}"
+    - key: mesos_follower_secret
+      value: "{{ mesos_follower_secret }}"
+    - key: mesos_zk
+      value: "{{ mesos_zk }}"
+  notify:
+    - restart mesos follower
+  tags:
+    - mesos-agent
+
+- name: write vault secrets
+  shell: VAULT_TOKEN={{vault_root_token}} vault write -address={{vault_address}} secret/repositories/docker/{{item.key}} value="{{ item.value }}"
+  #no_log: true
+  with_items:
+    - key: auth
+      value: ' { \"auths\": { {% for registry in docker_registries %}\"{{ registry.docker_registry_url }}\": { \"auth\": \"{{ registry.docker_registry_creds }}\",\"email\": \"{{ registry.docker_registry_email }}\" } {% if not loop.last %},{% endif %}{% endfor %} } } '
+  notify:
+    - restart mesos follower
+  tags:
+    - mesos-agent
+
+
+- include: ../../vault/tasks/create-token-service.yml service_name=mesos-agent service_user={{ mesos_agent_user }} service_vault_token={{ mesos_agent_vault_token }}
+
+## VAULT TOKEN END
+
+- name: create mesos-agent service over ride directory
+  sudo: yes
+  file:
+    path: /etc/systemd/system/mesos-agent.service.d
+    state: directory
+  tags:
+    - mesos-agent
+
+- name: create service wrapper script
   sudo: yes
   copy:
-    dest: /etc/sysconfig/mesos-agent-credential
-    content: "{{ mesos_follower_principal }} {{ mesos_follower_secret }}"
-    mode: 0600
-  notify: restart mesos follower
+    src: vault-wrapper-mesos-agent.sh
+    dest: /usr/local/bin/vault-wrapper-mesos-agent.sh
+    mode: 0755
+  notify:
+    - restart mesos follower
   tags:
-    - mesos
+    - mesos-agent
 
-- name: delete credential
-  when: not do_mesos_follower_auth|bool
-  sudo: yes
-  file:
-    dest: /etc/sysconfig/mesos-agent-credential
-    state: absent
-  notify: restart mesos follower
-  tags:
-    - mesos
-
-- name: write mantl-api credential
-  when: do_mesos_framework_auth|bool
+- name: create mesos-agent vault over ride
   sudo: yes
   template:
-    src: mantl-api-credential.j2
-    dest: /etc/sysconfig/mantl-api
-    mode: 0600
+    dest: /etc/systemd/system/mesos-agent.service.d/vault.conf
+    src: vault-mesos-agent.conf.j2
+  notify:
+    - reload systemd
+    - restart mesos follower
   tags:
-    - mesos
+    - mesos-agent
 
-- name: delete mantl-api credential
-  when: not do_mesos_framework_auth|bool
-  sudo: yes
-  file:
-    dest: /etc/sysconfig/mantl-api
-    state: absent
-  tags:
-    - mesos
+#
+# - name: write credential
+#   when: do_mesos_follower_auth|bool
+#   sudo: yes
+#   copy:
+#     dest: /etc/sysconfig/mesos-agent-credential
+#     content: "{{ mesos_follower_principal }} {{ mesos_follower_secret }}"
+#     mode: 0600
+#   notify: restart mesos follower
+#   tags:
+#     - mesos
+#
+# - name: delete credential
+#   when: not do_mesos_follower_auth|bool
+#   sudo: yes
+#   file:
+#     dest: /etc/sysconfig/mesos-agent-credential
+#     state: absent
+#   notify: restart mesos follower
+#   tags:
+#     - mesos
+#
+# - name: write mantl-api credential
+#   when: do_mesos_framework_auth|bool
+#   sudo: yes
+#   template:
+#     src: mantl-api-credential.j2
+#     dest: /etc/sysconfig/mantl-api
+#     mode: 0600
+#   tags:
+#     - mesos
+#
+# - name: delete mantl-api credential
+#   when: not do_mesos_framework_auth|bool
+#   sudo: yes
+#   file:
+#     dest: /etc/sysconfig/mantl-api
+#     state: absent
+#   tags:
+#     - mesos

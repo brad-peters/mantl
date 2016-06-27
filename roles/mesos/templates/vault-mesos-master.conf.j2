@@ -1,0 +1,10 @@
+[Unit]
+After=vault.service
+
+[Service]
+PrivateTmp=true
+Environment=VAULT_ADDR={{ vault_address }}
+Environment=VAULT_TOKEN={{ mesos_master_vault_token }}
+ExecStart=
+ExecStart=/usr/local/bin/vault-wrapper-mesos-master.sh
+KillMode=control-group

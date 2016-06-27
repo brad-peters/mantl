@@ -30,26 +30,122 @@
   tags:
     - mesos
 
-- name: write leader credentials
-  sudo: yes
-  when: do_mesos_framework_auth|bool or do_mesos_follower_auth|bool
-  template:
-    src: master-credentials.j2
-    dest: /etc/sysconfig/mesos-credentials
-    mode: 0600
+
+## VAULT TOKEN START
+- name: Set vault_root_token
+  set_fact:
+    vault_root_token: '{% for host in groups["all"] if hostvars[host].vault_root_token is defined %}{% if loop.last %}{{ hostvars[host].vault_root_token }}{% endif %}{% endfor %}'
+  when: "not vault_root_token is defined"
+
+- include_vars: ../../vault/defaults/main.yml
+  when: " not vault_address is defined"
+
+- name: write mesos-master-ro policy for vault_keys
+  copy:
+    dest: /tmp/mesos-master-policy.json
+    src: mesos-master-policy.json
+  tags:
+    - mesos-master
+
+- name: write mesos-master policy to vault_keys
+  shell: VAULT_TOKEN={{vault_root_token}} vault policy-write -address={{vault_address}} mesos-master /tmp/mesos-master-policy.json
+  #no_log: true
+  tags:
+    - mesos-master
+
+- name: create mesos-master vault token
+  shell: VAULT_TOKEN={{vault_root_token}} vault token-create -address={{vault_address}} --policy=mesos-master --format=json
+  #no_log: true
+  register: mesos_master_token_result
+  tags:
+    - mesos-master
+
+- name: set mesos-master vault token
+  set_fact:
+    mesos_master_vault_token={{ (mesos_master_token_result.stdout | from_json).auth.client_token }}
+
+- name: write vault secrets
+  shell: VAULT_TOKEN={{vault_root_token}} vault write -address={{vault_address}} secret/mesos-master/{{item.key}} value="{{ item.value }}"
+  #no_log: true
+  with_items:
+    - key: mesos_credentials
+      value: "{{ mesos_credentials }}"
+    - key: mesos_zk
+      value: "{{ mesos_zk }}"
+    - key: mesos_framework_auth
+      value: "{%- for credential in mesos_credentials -%}{{ credential.principal }} {{ credential.secret }}{% if not loop.last %}:{% endif %}{% endfor -%}"
   notify:
     - restart mesos leader
   tags:
-    - mesos
+    - mesos-master
 
-- name: delete leader credentials
-  sudo: yes
-  when: not do_mesos_framework_auth|bool and not do_mesos_follower_auth|bool
-  file:
-    dest: /etc/sysconfig/mesos-credentials
-    state: absent
+- name: write follower vault secrets
+  shell: VAULT_TOKEN={{vault_root_token}} vault write -address={{vault_address}} secret/mesos-agent/{{item.key}} value="{{ item.value }}"
+  #no_log: true
+  with_items:
+    - key: mesos_follower_principal
+      value: "{{ mesos_follower_principal }}"
+    - key: mesos_follower_secret
+      value: "{{ mesos_follower_secret }}"
+  notify:
+    - restart mesos leader
   tags:
-    - mesos
+    - mesos-master
+
+- include: ../../vault/tasks/create-token-service.yml service_name=mesos-master service_user={{ mesos_master_user }} service_vault_token={{ mesos_master_vault_token }}
+
+## VAULT TOKEN END
+
+- name: create mesos-master service over ride directory
+  sudo: yes
+  file:
+    path: /etc/systemd/system/mesos-master.service.d
+    state: directory
+  tags:
+    - mesos-master
+
+- name: create service wrapper script
+  sudo: yes
+  copy:
+    src: vault-wrapper-mesos-master.sh
+    dest: /usr/local/bin/vault-wrapper-mesos-master.sh
+    mode: 0755
+  notify:
+    - restart mesos leader
+  tags:
+    - mesos-master
+
+- name: create mesos-master vault over ride
+  sudo: yes
+  template:
+    dest: /etc/systemd/system/mesos-master.service.d/vault.conf
+    src: vault-mesos-master.conf.j2
+  notify:
+    - reload systemd
+    - restart mesos leader
+  tags:
+    - mesos-master
+#
+# - name: write leader credentials
+#   sudo: yes
+#   when: do_mesos_framework_auth|bool or do_mesos_follower_auth|bool
+#   template:
+#     src: master-credentials.j2
+#     dest: /etc/sysconfig/mesos-credentials
+#     mode: 0600
+#   notify:
+#     - restart mesos leader
+#   tags:
+#     - mesos
+#
+# - name: delete leader credentials
+#   sudo: yes
+#   when: not do_mesos_framework_auth|bool and not do_mesos_follower_auth|bool
+#   file:
+#     dest: /etc/sysconfig/mesos-credentials
+#     state: absent
+#   tags:
+#     - mesos
 
 - name: wait for zookeeper service to be registered
   wait_for:

@@ -8,9 +8,6 @@ MESOS_LOGGING_LEVEL={{ mesos_logging_level }}
 
 # agent configuration
 
-# required
-MESOS_MASTER={{ mesos_zk }}
-
 # optional
 MESOS_ATTRIBUTES={{ mesos_attributes | join (";") }}
 MESOS_RESOURCES={{ mesos_resources | join (";") }}
@@ -19,6 +16,6 @@ MESOS_EXECUTOR_REGISTRATION_TIMEOUT={{ mesos_executor_registration_timeout }}
 MESOS_WORK_DIR={{ mesos_work_dir }}
 
 # authentication
-{% if not (do_mesos_follower_auth|bool) %}# {% endif %}MESOS_CREDENTIAL=file:///etc/sysconfig/mesos-agent-credential
+{% if not (do_mesos_follower_auth|bool) %}# {% endif %}MESOS_CREDENTIAL=file:///tmp/mesos-agent-credential
 
 EXTRA_OPTS=""

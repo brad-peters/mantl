@@ -11,7 +11,6 @@ MESOS_LOGGING_LEVEL={{ mesos_logging_level }}
 # required
 MESOS_QUORUM={{ groups[mesos_leaders_group]|count // 2 + 1 }}
 MESOS_WORK_DIR={{ mesos_work_dir }}
-MESOS_ZK={{ mesos_zk }}
 
 # optional
 MESOS_CLUSTER={{ mesos_cluster }}
@@ -20,4 +19,4 @@ MESOS_AUTHENTICATORS=crammd5
 # authentication
 {% if not (do_mesos_framework_auth|bool) %}# {% endif %}MESOS_AUTHENTICATE=true
 {% if not (do_mesos_follower_auth|bool) %}# {% endif %}MESOS_AUTHENTICATE_SLAVES=true
-{% if not (do_mesos_framework_auth|bool or do_mesos_follower_auth|bool) %}# {% endif %}MESOS_CREDENTIALS=file:///etc/sysconfig/mesos-credentials
+{% if not (do_mesos_framework_auth|bool or do_mesos_follower_auth|bool) %}# {% endif %}MESOS_CREDENTIALS=file:///tmp/mesos-credentials
