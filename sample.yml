@@ -10,6 +10,7 @@
 # `roles/` directory, or by checking the online documentation at
 # docs.mantl.io.
 - hosts: all
+  gather_facts: yes
   vars:
     # consul_acl_datacenter should be set to the datacenter you want to control
     # Consul ACLs. If you only have one datacenter, set it to that or remove
@@ -17,10 +18,7 @@
     # consul_acl_datacenter: your_primary_datacenter
 
     # CUSTOM REPOSITORY VARIABLES
-
     consul_servers_group: role=control
-
-    vault_backend: file
 
   roles:
     - common
@@ -31,39 +29,8 @@
     - consul
     # - etcd
     - dnsmasq
-
-- hosts: role=control
-  gather_facts: yes
-  vars:
-    consul_servers_group: role=control
-    mesos_leaders_group: role=control
-    mesos_mode: leader
-    zookeeper_server_group: role=control
-
-    # CUSTOM REPOSITORY VARIABLES
-
-
-    vault_backend: consul
-
-  roles:
     - vault
-
-- hosts: all
-  vars:
-    # consul_acl_datacenter should be set to the datacenter you want to control
-    # Consul ACLs. If you only have one datacenter, set it to that or remove
-    # this variable.
-    # consul_acl_datacenter: your_primary_datacenter
-
-    # CUSTOM REPOSITORY VARIABLES
-
-    consul_servers_group: role=control
-
-    vault_backend: file
-
-  roles:
     - consul-template
-
 
 # ROLES - after provisioning the software that's common to all hosts, we do
 # specialized hosts. This configuration has two major groups: control nodes and
@@ -94,7 +61,7 @@
 # themselves, they only schedule work. That said, there should be at least 3 of
 # them (and always an odd number) so that ZooKeeper can get and keep a quorum.
 - hosts: role=control
-  gather_facts: yes
+  gather_facts: no
   vars:
     consul_servers_group: role=control
     mesos_leaders_group: role=control
@@ -102,9 +69,6 @@
     zookeeper_server_group: role=control
 
     # CUSTOM REPOSITORY VARIABLES
-
-
-    vault_backend: consul
 
   roles:
     - zookeeper
