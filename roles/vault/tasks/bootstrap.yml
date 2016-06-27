@@ -1,19 +1,26 @@
 ---
+
+- name: test
+  debug:
+    msg: '{% for host in groups[vault_servers_group] %}{{ hostvars[host].inventory_hostname }}:{% endfor %}'
+
+
 - name: initialize vault
   sudo: yes
-  run_once: yes
+  # run_once: yes
   changed_when: no
   command: curl -1 -X PUT -d '{{ vault_init_json }}' -k https://localhost:8200/v1/sys/init
   register: vault_init_output
   tags:
     - vault
     - skip_ansible_lint
+  when: inventory_hostname == "{% for host in groups[vault_servers_group] %}{% if loop.first %}{{ hostvars[host].inventory_hostname }}{% endif %}{% endfor %}"
 
 - name: extract keys
   sudo: yes
-  run_once: yes
+  # run_once: yes
   changed_when: no
-  when: "'Vault is already initialized' not in vault_init_output.stdout"
+  when: "('Vault is already initialized' not in vault_init_output.stdout) and inventory_hostname == '{% for host in groups[vault_servers_group] %}{% if loop.first %}{{ hostvars[host].inventory_hostname }}{% endif %}{% endfor %}'"
   set_fact:
     vault_keys: "{{ (vault_init_output.stdout|from_json)['keys'] }}"
   tags:
@@ -21,9 +28,9 @@
 
 - name: extract root token
   sudo: yes
-  run_once: yes
+  # run_once: yes
   changed_when: no
-  when: "'Vault is already initialized' not in vault_init_output.stdout"
+  when: "('Vault is already initialized' not in vault_init_output.stdout) and inventory_hostname == '{% for host in groups[vault_servers_group] %}{% if loop.first %}{{ hostvars[host].inventory_hostname }}{% endif %}{% endfor %}'"
   set_fact:
     vault_root_token: "{{ (vault_init_output.stdout|from_json)['root_token'] }}"
   tags:
@@ -31,7 +38,7 @@
 
 - name: create unseal script
   sudo: yes
-  when: "'Vault is already initialized' not in vault_init_output.stdout"
+  when: "('Vault is already initialized' not in vault_init_output.stdout) and inventory_hostname == '{% for host in groups[vault_servers_group] %}{% if loop.first %}{{ hostvars[host].inventory_hostname }}{% endif %}{% endfor %}'"
   template:
     src: vault.unseal.j2
     dest: /usr/local/bin/vault-unseal.sh
@@ -43,8 +50,8 @@
 
 - name: update security.yml with token
   connection: local
-  run_once: yes
-  when: "'Vault is already initialized' not in vault_init_output.stdout"
+  # run_once: yes
+  when: "('Vault is already initialized' not in vault_init_output.stdout) and inventory_hostname == '{% for host in groups[vault_servers_group] %}{% if loop.first %}{{ hostvars[host].inventory_hostname }}{% endif %}{% endfor %}'"
   lineinfile:
     dest: "{{ playbook_dir }}/security.yml"
     line: 'vault_root_token: {{ vault_root_token }}'

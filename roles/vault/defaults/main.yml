@@ -1,5 +1,8 @@
 ---
-vault_package: vault-0.4.1
+vault_servers_group: role=control
+vault_is_server: "{{ vault_servers_group in group_names }}"
+
+vault_package: vault-0.6.0-1
 vault_default_port: 8200
 vault_command_options: -tls-skip-verify
 
@@ -7,6 +10,8 @@ vault_init_json: '{
 	"secret_shares": 5,
 	"secret_threshold": 3
 }' # ansible lint doesn't like the line split between curly braces
+
+vault_address: "https://vault.service.{{consul_dns_domain}}:{{vault_default_port}}"
 
 # 5184000 seconds = 60 days
 vault_token_max_ttl: 5184000

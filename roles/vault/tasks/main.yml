@@ -15,6 +15,7 @@
     dest: /etc/vault/vault.hcl
   tags:
     - vault
+  when: vault_is_server
 
 - name: enable vault
   sudo: yes
@@ -24,17 +25,21 @@
     state: started
   tags:
     - vault
+  when: vault_is_server
 
 - name: wait for vault port
   wait_for:
     port: 8200
   tags:
     - vault
+  when: vault_is_server
 
 - include: bootstrap.yml
+  when: vault_is_server
 
 - name: set token ttl
   shell: VAULT_TOKEN={{vault_root_token}} vault mount-tune -default-lease-ttl={{ vault_token_default_ttl }}s -max-lease-ttl={{ vault_token_max_ttl }}s auth/token
-  no_log: true
+  #no_log: true
   tags:
     - vault
+  when: vault_is_server
