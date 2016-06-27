@@ -26,6 +26,13 @@
 
 
 ## VAULT TOKEN START
+- name: Set vault_root_token
+  set_fact:
+    vault_root_token: '{% for host in groups["all"] if hostvars[host].vault_root_token is defined %}{% if loop.last %}{{ hostvars[host].vault_root_token }}{% endif %}{% endfor %}'
+  when: "not vault_root_token is defined"
+
+- include_vars: ../../vault/defaults/main.yml
+  when: " not vault_address is defined"
 
 - name: write marathon-ro policy for vault_keys
   copy:
@@ -35,14 +42,14 @@
     - marathon
 
 - name: write marathon policy to vault_keys
-  shell: VAULT_TOKEN={{vault_root_token}} vault policy-write marathon /tmp/marathon-policy.json
-  no_log: true
+  shell: VAULT_TOKEN={{vault_root_token}} vault policy-write -address={{vault_address}} marathon /tmp/marathon-policy.json
+  #no_log: true
   tags:
     - marathon
 
 - name: create marathon vault token
-  shell: VAULT_TOKEN={{vault_root_token}} vault token-create --policy=marathon --format=json
-  no_log: true
+  shell: VAULT_TOKEN={{vault_root_token}} vault token-create -address={{vault_address}} --policy=marathon --format=json
+  #no_log: true
   register: marathon_token_result
   tags:
     - marathon
@@ -52,8 +59,8 @@
     marathon_vault_token={{ (marathon_token_result.stdout | from_json).auth.client_token }}
 
 - name: write vault secrets
-  shell: VAULT_TOKEN={{vault_root_token}} vault write secret/marathon/{{item.key}} value="{{ item.value }}"
-  no_log: true
+  shell: VAULT_TOKEN={{vault_root_token}} vault write -address={{vault_address}} secret/marathon/{{item.key}} value="{{ item.value }}"
+  #no_log: true
   with_items:
     - key: marathon_zk_connect
       value: "{{ marathon_zk_connect }}"
@@ -99,7 +106,7 @@
       [Service]
       User={{ marathon_user }}
   notify:
-    - reload systemd daemon
+    - reload systemd
     - restart marathon
   tags:
     - marathon
@@ -121,7 +128,7 @@
     dest: /etc/systemd/system/marathon.service.d/vault.conf
     src: vault.conf.j2
   notify:
-    - reload systemd daemon
+    - reload systemd
     - restart marathon
   tags:
     - marathon

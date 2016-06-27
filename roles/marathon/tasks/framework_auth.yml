@@ -1,8 +1,8 @@
 ---
 - name: create secret file (vault)
   when: do_mesos_framework_auth|bool
-  shell: VAULT_TOKEN={{vault_root_token}} vault write secret/marathon/mesos_framework_auth/ mesos_framework_auth="{{ marathon_secret }}"
-  no_log: true
+  shell: VAULT_TOKEN={{vault_root_token}} vault write -address={{vault_address}} secret/marathon/mesos_framework_auth value="{{ marathon_secret }}"
+  #no_log: true
   notify:
     - restart marathon
   tags:
@@ -11,7 +11,7 @@
 # remove if options become unset
 - name: remove secret file (vault)
   when: not do_mesos_framework_auth|bool
-  shell: VAULT_TOKEN={{vault_root_token}} vault delete secret/marathon/mesos_framework_auth/
-  no_log: true
+  shell: VAULT_TOKEN={{vault_root_token}} vault delete -address={{vault_address}} secret/marathon/mesos_framework_auth
+  #no_log: true
   notify:
     - restart marathon
