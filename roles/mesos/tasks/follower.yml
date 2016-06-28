@@ -46,13 +46,13 @@
 
 - name: write mesos-agent policy to vault_keys
   shell: VAULT_TOKEN={{vault_root_token}} vault policy-write -address={{vault_address}} mesos-agent /tmp/mesos-agent-policy.json
-  #no_log: true
+  no_log: true
   tags:
     - mesos-agent
 
 - name: create mesos-agent vault token
   shell: VAULT_TOKEN={{vault_root_token}} vault token-create -address={{vault_address}} --policy=mesos-agent --format=json
-  #no_log: true
+  no_log: true
   register: mesos_agent_token_result
   tags:
     - mesos-agent
@@ -63,7 +63,7 @@
 
 - name: write vault secrets
   shell: VAULT_TOKEN={{vault_root_token}} vault write -address={{vault_address}} secret/mesos-agent/{{item.key}} value="{{ item.value }}"
-  #no_log: true
+  no_log: true
   with_items:
     - key: mesos_follower_principal
       value: "{{ mesos_follower_principal }}"
@@ -78,7 +78,7 @@
 
 - name: write vault secrets
   shell: VAULT_TOKEN={{vault_root_token}} vault write -address={{vault_address}} secret/repositories/docker/{{item.key}} value="{{ item.value }}"
-  #no_log: true
+  no_log: true
   with_items:
     - key: auth
       value: ' { \"auths\": { {% for registry in docker_registries %}\"{{ registry.docker_registry_url }}\": { \"auth\": \"{{ registry.docker_registry_creds }}\",\"email\": \"{{ registry.docker_registry_email }}\" } {% if not loop.last %},{% endif %}{% endfor %} } } '

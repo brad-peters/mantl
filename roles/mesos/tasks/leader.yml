@@ -49,13 +49,13 @@
 
 - name: write mesos-master policy to vault_keys
   shell: VAULT_TOKEN={{vault_root_token}} vault policy-write -address={{vault_address}} mesos-master /tmp/mesos-master-policy.json
-  #no_log: true
+  no_log: true
   tags:
     - mesos-master
 
 - name: create mesos-master vault token
   shell: VAULT_TOKEN={{vault_root_token}} vault token-create -address={{vault_address}} --policy=mesos-master --format=json
-  #no_log: true
+  no_log: true
   register: mesos_master_token_result
   tags:
     - mesos-master
@@ -66,7 +66,7 @@
 
 - name: write vault secrets
   shell: VAULT_TOKEN={{vault_root_token}} vault write -address={{vault_address}} secret/mesos-master/{{item.key}} value="{{ item.value }}"
-  #no_log: true
+  no_log: true
   with_items:
     - key: mesos_credentials
       value: "{{ mesos_credentials }}"
@@ -81,7 +81,7 @@
 
 - name: write follower vault secrets
   shell: VAULT_TOKEN={{vault_root_token}} vault write -address={{vault_address}} secret/mesos-agent/{{item.key}} value="{{ item.value }}"
-  #no_log: true
+  no_log: true
   with_items:
     - key: mesos_follower_principal
       value: "{{ mesos_follower_principal }}"
