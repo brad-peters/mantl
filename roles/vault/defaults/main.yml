@@ -11,7 +11,8 @@ vault_init_json: '{
 	"secret_threshold": 3
 }' # ansible lint doesn't like the line split between curly braces
 
-vault_address: "https://vault.service.{{consul_dns_domain}}:{{vault_default_port}}"
+vault_host: "vault.service.{{consul_dns_domain}}"
+vault_address: "https://{{vault_host}}:{{vault_default_port}}"
 
 # 5184000 seconds = 60 days
 vault_token_max_ttl: 5184000

@@ -29,7 +29,7 @@
 
 - name: wait for vault port
   wait_for:
-    port: 8200
+    port: "{{vault_default_port}}"
   tags:
     - vault
   when: vault_is_server
@@ -39,7 +39,17 @@
 
 - name: set token ttl
   shell: VAULT_TOKEN={{vault_root_token}} vault mount-tune -default-lease-ttl={{ vault_token_default_ttl }}s -max-lease-ttl={{ vault_token_max_ttl }}s auth/token
-  #no_log: true
+  no_log: true
   tags:
     - vault
   when: vault_is_server
+
+- name: wait for vault service to be registered
+  wait_for:
+    host: "{{ vault_host }}"
+    port: "{{ vault_default_port }}"
+    delay: 10
+    timeout: 300
+    state: present
+  tags:
+    - vault
